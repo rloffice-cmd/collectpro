@@ -27,7 +27,7 @@ const GAMES = [
                                               .select("*")
                                                     .eq("id", user.id)
                                                           .single()
-                                                                .then(({ data }) => {
+                                                                .then(({ data }: { data: any }) => {
                                                                         if (data) {
                                                                                   setDisplayName(data.display_name || "");
                                                                                             setBio(data.bio || "");
