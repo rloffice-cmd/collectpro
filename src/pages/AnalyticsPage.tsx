@@ -1,26 +1,78 @@
-export default function AnalyticsPage() {
-  return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">ניתוח אוסף</h2>
+import { useState, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { getCardStats } from "@/lib/cards";
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-card border rounded-xl p-6">
-          <h3 className="font-medium mb-4">התפלגות לפי משחק</h3>
-          <p className="text-sm text-muted-foreground">הוסף קלפים כדי לראות סטטיסטיקות</p>
-        </div>
-        <div className="bg-card border rounded-xl p-6">
-          <h3 className="font-medium mb-4">שווי לאורך זמן</h3>
-          <p className="text-sm text-muted-foreground">הוסף קלפים כדי לראות סטטיסטיקות</p>
-        </div>
-        <div className="bg-card border rounded-xl p-6">
-          <h3 className="font-medium mb-4">התפלגות לפי מצב</h3>
-          <p className="text-sm text-muted-foreground">הוסף קלפים כדי לראות סטטיסטיקות</p>
-        </div>
-        <div className="bg-card border rounded-xl p-6">
-          <h3 className="font-medium mb-4">התפלגות לפי נדירות</h3>
-          <p className="text-sm text-muted-foreground">הוסף קלפים כדי לראות סטטיסטיקות</p>
-        </div>
-      </div>
-    </div>
-  );
-}
+function BarChart({ data, title }: { data: Record<string, number>; title: string }) {
+  const entries = Object.entries(data);
+    const max = Math.max(...entries.map(([, v]) => v), 1);
+      if (entries.length === 0) return null;
+
+        return (
+            <div className="rounded-xl border border-border bg-card p-4">
+                  <h3 className="font-semibold mb-4">{title}</h3>
+                        <div className="space-y-2">
+                                {entries.map(([label, value]) => (
+                                          <div key={label} className="flex items-center gap-3">
+                                                      <span className="text-sm text-muted-foreground w-24 truncate capitalize">
+                                                                    {label.replace(/_/g, " ")}
+                                                                                </span>
+                                                                                            <div className="flex-1 bg-secondary rounded-full h-5 overflow-hidden">
+                                                                                                          <div
+                                                                                                                          className="bg-primary h-full rounded-full transition-all"
+                                                                                                                                          style={{ width: `${(value / max) * 100}%` }}
+                                                                                                                                                        />
+                                                                                                                                                                    </div>
+                                                                                                                                                                                <span className="text-sm font-medium w-8 text-right">{value}</span>
+                                                                                                                                                                                          </div>
+                                                                                                                                                                                                  ))}
+                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                              );
+                                                                                                                                                                                                              }
+
+                                                                                                                                                                                                              export default function AnalyticsPage() {
+                                                                                                                                                                                                                const { user } = useAuth();
+                                                                                                                                                                                                                  const [stats, setStats] = useState<{
+                                                                                                                                                                                                                      totalCards: number; totalValue: number;
+                                                                                                                                                                                                                          byGame: Record<string, number>;
+                                                                                                                                                                                                                              byRarity: Record<string, number>;
+                                                                                                                                                                                                                                  byCondition: Record<string, number>;
+                                                                                                                                                                                                                                    } | null>(null);
+                                                                                                                                                                                                                                      const [loading, setLoading] = useState(true);
+
+                                                                                                                                                                                                                                        useEffect(() => {
+                                                                                                                                                                                                                                            if (!user) return;
+                                                                                                                                                                                                                                                getCardStats(user.id)
+                                                                                                                                                                                                                                                      .then(setStats)
+                                                                                                                                                                                                                                                            .catch(console.error)
+                                                                                                                                                                                                                                                                  .finally(() => setLoading(false));
+                                                                                                                                                                                                                                                                    }, [user]);
+
+                                                                                                                                                                                                                                                                      if (loading) {
+                                                                                                                                                                                                                                                                          return (
+                                                                                                                                                                                                                                                                                <div className="flex justify-center py-12">
+                                                                                                                                                                                                                                                                                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+                                                                                                                                                                                                                                                                                              </div>
+                                                                                                                                                                                                                                                                                                  );
+                                                                                                                                                                                                                                                                                                    }
+
+                                                                                                                                                                                                                                                                                                      if (!stats || stats.totalCards === 0) {
+                                                                                                                                                                                                                                                                                                          return (
+                                                                                                                                                                                                                                                                                                                <div className="space-y-6">
+                                                                                                                                                                                                                                                                                                                        <h1 className="text-2xl font-bold">Analytics</h1>
+                                                                                                                                                                                                                                                                                                                                <p className="text-muted-foreground">Add some cards to see analytics.</p>
+                                                                                                                                                                                                                                                                                                                                      </div>
+                                                                                                                                                                                                                                                                                                                                          );
+                                                                                                                                                                                                                                                                                                                                            }
+
+                                                                                                                                                                                                                                                                                                                                              return (
+                                                                                                                                                                                                                                                                                                                                                  <div className="space-y-6">
+                                                                                                                                                                                                                                                                                                                                                        <h1 className="text-2xl font-bold">Analytics</h1>
+                                                                                                                                                                                                                                                                                                                                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                                                                                                                                                                                                                                                                                                                      <BarChart data={stats.byGame} title="Cards by Game" />
+                                                                                                                                                                                                                                                                                                                                                                              <BarChart data={stats.byRarity} title="Cards by Rarity" />
+                                                                                                                                                                                                                                                                                                                                                                                      <BarChart data={stats.byCondition} title="Cards by Condition" />
+                                                                                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                                                                                                                                                  );
+                                                                                                                                                                                                                                                                                                                                                                                                  }
