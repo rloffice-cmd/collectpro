@@ -1,97 +1,134 @@
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Plus, Search } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { getCards, deleteCard, getCardsByGame } from "@/lib/cards";
-import { CardItem } from "@/components/cards/CardItem";
-import type { Card } from "@/types/card";
+import { useEffect, useState, useCallback, useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import { Plus, Search, ArrowUpDown, Download } from 'lucide-react'
+import type { Card, CardGame } from '../types/card'
+import { getCards, deleteCard } from '../lib/cards'
+import { exportCardsToCSV } from '../lib/export'
+import CardItem from '../components/cards/CardItem'
 
-const GAMES = [
-  { value: "", label: "All Games" },
-    { value: "pokemon", label: "Pokemon" },
-      { value: "magic", label: "MTG" },
-        { value: "yugioh", label: "Yu-Gi-Oh!" },
-          { value: "one_piece", label: "One Piece" },
-            { value: "other", label: "Other" },
-            ];
+const GAME_FILTERS: { value: string; label: string }[] = [
+  { value: '', label: 'כל המשחקים' },
+  { value: 'pokemon', label: 'Pokemon' },
+  { value: 'magic', label: 'Magic' },
+  { value: 'yugioh', label: 'Yu-Gi-Oh!' },
+  { value: 'one_piece', label: 'One Piece' },
+  { value: 'other', label: 'אחר' },
+]
 
-            export default function CardsPage() {
-              const { user } = useAuth();
-                const [cards, setCards] = useState<Card[]>([]);
-                  const [loading, setLoading] = useState(true);
-                    const [search, setSearch] = useState("");
-                      const [gameFilter, setGameFilter] = useState("");
+const SORT_OPTIONS: { value: string; label: string }[] = [
+  { value: 'date_desc', label: 'חדש ביותר' },
+  { value: 'date_asc', label: 'ישן ביותר' },
+  { value: 'name_asc', label: 'שם (א-ת)' },
+  { value: 'name_desc', label: 'שם (ת-א)' },
+  { value: 'value_desc', label: 'שווי (גבוה לנמוך)' },
+  { value: 'value_asc', label: 'שווי (נמוך לגבוה)' },
+]
 
-                        const fetchCards = async () => {
-                            if (!user) return;
-                                setLoading(true);
-                                    try {
-                                          const data = gameFilter
-                                                  ? await getCardsByGame(user.id, gameFilter)
-                                                          : await getCards(user.id);
-                                                                setCards(data);
-                                                                    } catch (err) {
-                                                                          console.error(err);
-                                                                              } finally {
-                                                                                    setLoading(false);
-                                                                                        }
-                                                                                          };
+export default function CardsPage() {
+  const [cards, setCards] = useState<Card[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [gameFilter, setGameFilter] = useState('')
+  const [sortBy, setSortBy] = useState('date_desc')
 
-                                                                                            useEffect(() => { fetchCards(); }, [user, gameFilter]);
+  const loadCards = useCallback(async () => {
+    try {
+      const data = await getCards({
+        search: searchQuery || undefined,
+        game: (gameFilter || undefined) as CardGame | undefined,
+      })
+      setCards(data)
+    } catch (err) {
+      console.error('Error loading cards:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [searchQuery, gameFilter])
 
-                                                                                              const handleDelete = async (id: string) => {
-                                                                                                  if (!confirm("Delete this card?")) return;
-                                                                                                      try {
-                                                                                                            await deleteCard(id);
-                                                                                                                  setCards((prev) => prev.filter((c) => c.id !== id));
-                                                                                                                      } catch (err) {
-                                                                                                                            console.error(err);
-                                                                                                                                }
-                                                                                                                                  };
+  useEffect(() => { loadCards() }, [loadCards])
 
-                                                                                                                                    const filtered = cards.filter((c) =>
-                                                                                                                                        c.name.toLowerCase().includes(search.toLowerCase())
-                                                                                                                                          );
+  const sortedCards = useMemo(() => {
+    const sorted = [...cards]
+    switch (sortBy) {
+      case 'date_asc': return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      case 'name_asc': return sorted.sort((a, b) => a.name.localeCompare(b.name))
+      case 'name_desc': return sorted.sort((a, b) => b.name.localeCompare(a.name))
+      case 'value_desc': return sorted.sort((a, b) => (b.estimated_value ?? 0) - (a.estimated_value ?? 0))
+      case 'value_asc': return sorted.sort((a, b) => (a.estimated_value ?? 0) - (b.estimated_value ?? 0))
+      default: return sorted
+    }
+  }, [cards, sortBy])
 
-                                                                                                                                            return (
-                                                                                                                                                <div className="space-y-6">
-                                                                                                                                                      <div className="flex items-center justify-between">
-                                                                                                                                                              <h1 className="text-2xl font-bold">My Cards</h1>
-                                                                                                                                                                      <Link to="/cards/new"
-                                                                                                                                                                                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90">
-                                                                                                                                                                                          <Plus className="w-4 h-4" /> Add Card
-                                                                                                                                                                                                  </Link>
-                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                              <div className="flex flex-col sm:flex-row gap-3">
-                                                                                                                                                                                                                      <div className="relative flex-1">
-                                                                                                                                                                                                                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                                                                                                                                                                                                                                          <input type="text" placeholder="Search cards..."
-                                                                                                                                                                                                                                                      value={search} onChange={(e) => setSearch(e.target.value)}
-                                                                                                                                                                                                                                                                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-card" />
-                                                                                                                                                                                                                                                                          </div>
-                                                                                                                                                                                                                                                                                  <select value={gameFilter} onChange={(e) => setGameFilter(e.target.value)}
-                                                                                                                                                                                                                                                                                            className="px-3 py-2 rounded-lg border border-border bg-card">
-                                                                                                                                                                                                                                                                                                      {GAMES.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
-                                                                                                                                                                                                                                                                                                              </select>
-                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                          {loading ? (
-                                                                                                                                                                                                                                                                                                                                  <div className="flex justify-center py-12">
-                                                                                                                                                                                                                                                                                                                                            <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
-                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                          ) : filtered.length === 0 ? (
-                                                                                                                                                                                                                                                                                                                                                                  <div className="text-center py-12 text-muted-foreground">
-                                                                                                                                                                                                                                                                                                                                                                            <p>No cards found.</p>
-                                                                                                                                                                                                                                                                                                                                                                                      <Link to="/cards/new" className="text-primary hover:underline mt-2 inline-block">
-                                                                                                                                                                                                                                                                                                                                                                                                  Add your first card
-                                                                                                                                                                                                                                                                                                                                                                                                            </Link>
-                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                          ) : (
-                                                                                                                                                                                                                                                                                                                                                                                                                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                                                                                                                                                                                                                                                                                                                                                                                                            {filtered.map((card) => (
-                                                                                                                                                                                                                                                                                                                                                                                                                                                        <CardItem key={card.id} card={card} onDelete={handleDelete} />
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                  ))}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                          </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                )}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      );
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      }
+  async function handleDelete(id: string) {
+    if (!confirm('בטוח שאתה רוצה למחוק את הקלף?')) return
+    try {
+      await deleteCard(id)
+      setCards(prev => prev.filter(c => c.id !== id))
+    } catch (err) {
+      console.error('Error deleting card:', err)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">הקלפים שלי</h2>
+        <div className="flex gap-2">
+          {cards.length > 0 && (
+            <button onClick={() => exportCardsToCSV(cards)} className="flex items-center gap-2 px-3 py-2 border rounded-lg text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">ייצוא CSV</span>
+            </button>
+          )}
+          <Link to="/cards/new" className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium">
+            <Plus className="h-4 w-4" />
+            הוסף קלף
+          </Link>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="חפש קלפים..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pr-10 pl-4 py-2 border rounded-lg bg-background text-sm"
+          />
+        </div>
+        <select value={gameFilter} onChange={e => setGameFilter(e.target.value)} className="px-3 py-2 border rounded-lg bg-background text-sm">
+          {GAME_FILTERS.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
+        </select>
+        <div className="flex items-center gap-1">
+          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="px-3 py-2 border rounded-lg bg-background text-sm">
+            {SORT_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
+        </div>
+      ) : sortedCards.length === 0 ? (
+        <div className="bg-card border rounded-xl p-8 text-center">
+          <p className="text-muted-foreground">
+            {searchQuery || gameFilter ? 'לא נמצאו קלפים התואמים לחיפוש' : 'עדיין אין קלפים באוסף. הוסף את הקלף הראשון שלך!'}
+          </p>
+        </div>
+      ) : (
+        <>
+          <p className="text-sm text-muted-foreground">{sortedCards.length} קלפים</p>
+          <div className="grid gap-3">
+            {sortedCards.map(card => (
+              <CardItem key={card.id} card={card} onDelete={handleDelete} />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}

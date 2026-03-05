@@ -1,156 +1,186 @@
-import { useState } from "react";
-import type { Card } from "@/types/card";
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Save, ArrowRight } from 'lucide-react'
+import type { Card, CardGame, CardCondition, CardRarity } from '../../types/card'
+import type { CardInsert } from '../../lib/cards'
+import { createCard, updateCard } from '../../lib/cards'
 
-const GAMES = [
-  { value: "pokemon", label: "Pokémon" },
-    { value: "magic", label: "Magic: The Gathering" },
-      { value: "yugioh", label: "Yu-Gi-Oh!" },
-        { value: "one_piece", label: "One Piece" },
-          { value: "other", label: "Other" },
-          ];
+const GAMES: { value: CardGame; label: string }[] = [
+  { value: 'pokemon', label: 'Pokemon' },
+  { value: 'magic', label: 'Magic: The Gathering' },
+  { value: 'yugioh', label: 'Yu-Gi-Oh!' },
+  { value: 'one_piece', label: 'One Piece' },
+  { value: 'other', label: 'אחר' },
+]
 
-          const RARITIES = [
-            { value: "common", label: "Common" },
-              { value: "uncommon", label: "Uncommon" },
-                { value: "rare", label: "Rare" },
-                  { value: "ultra_rare", label: "Ultra Rare" },
-                    { value: "secret_rare", label: "Secret Rare" },
-                    ];
+const CONDITIONS: { value: CardCondition; label: string }[] = [
+  { value: 'mint', label: 'Mint' },
+  { value: 'near_mint', label: 'Near Mint' },
+  { value: 'excellent', label: 'Excellent' },
+  { value: 'good', label: 'Good' },
+  { value: 'light_played', label: 'Light Played' },
+  { value: 'played', label: 'Played' },
+  { value: 'poor', label: 'Poor' },
+]
 
-                    const CONDITIONS = [
-                      { value: "mint", label: "Mint" },
-                        { value: "near_mint", label: "Near Mint" },
-                          { value: "excellent", label: "Excellent" },
-                            { value: "good", label: "Good" },
-                              { value: "played", label: "Played" },
-                                { value: "poor", label: "Poor" },
-                                ];
+const RARITIES: { value: CardRarity; label: string }[] = [
+  { value: 'common', label: 'Common' },
+  { value: 'uncommon', label: 'Uncommon' },
+  { value: 'rare', label: 'Rare' },
+  { value: 'ultra_rare', label: 'Ultra Rare' },
+  { value: 'secret_rare', label: 'Secret Rare' },
+  { value: 'promo', label: 'Promo' },
+]
 
-                                interface CardFormProps {
-                                  initialData?: Partial<Card>;
-                                    onSubmit: (data: Partial<Card>) => Promise<void>;
-                                      loading?: boolean;
-                                      }
+interface CardFormProps {
+  card?: Card
+}
 
-                                      export function CardForm({ initialData, onSubmit, loading }: CardFormProps) {
-                                        const [form, setForm] = useState<Partial<Card>>({
-                                            name: initialData?.name || "",
-                                                game: initialData?.game || "pokemon",
-                                                    set_name: initialData?.set_name || "",
-                                                        card_number: initialData?.card_number || "",
-                                                            rarity: initialData?.rarity || "common",
-                                                                condition: initialData?.condition || "near_mint",
-                                                                    language: initialData?.language || "en",
-                                                                        is_foil: initialData?.is_foil || false,
-                                                                            is_first_edition: initialData?.is_first_edition || false,
-                                                                                quantity: initialData?.quantity || 1,
-                                                                                    purchase_price: initialData?.purchase_price || 0,
-                                                                                        estimated_value: initialData?.estimated_value || 0,
-                                                                                            image_url: initialData?.image_url || "",
-                                                                                                notes: initialData?.notes || "",
-                                                                                                  });
+export default function CardForm({ card }: CardFormProps) {
+  const navigate = useNavigate()
+  const isEdit = !!card
 
-                                                                                                    const handleChange = (
-                                                                                                        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-                                                                                                          ) => {
-                                                                                                              const { name, value, type } = e.target;
-                                                                                                                  const checked = (e.target as HTMLInputElement).checked;
-                                                                                                                      setForm((prev) => ({
-                                                                                                                            ...prev,
-                                                                                                                                  [name]: type === "checkbox" ? checked : type === "number" ? Number(value) : value,
-                                                                                                                                      }));
-                                                                                                                                        };
+  const [form, setForm] = useState<CardInsert>({
+    name: card?.name ?? '',
+    game: card?.game ?? 'pokemon',
+    set_name: card?.set_name ?? null,
+    card_number: card?.card_number ?? null,
+    rarity: card?.rarity ?? null,
+    condition: card?.condition ?? 'near_mint',
+    language: card?.language ?? 'en',
+    is_foil: card?.is_foil ?? false,
+    is_first_edition: card?.is_first_edition ?? false,
+    quantity: card?.quantity ?? 1,
+    purchase_price: card?.purchase_price ?? null,
+    estimated_value: card?.estimated_value ?? null,
+    image_url: card?.image_url ?? null,
+    notes: card?.notes ?? null,
+    tags: card?.tags ?? [],
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
-                                                                                                                                          const handleSubmit = async (e: React.FormEvent) => {
-                                                                                                                                              e.preventDefault();
-                                                                                                                                                  await onSubmit(form);
-                                                                                                                                                    };
+  function set<K extends keyof CardInsert>(key: K, value: CardInsert[K]) {
+    setForm(prev => ({ ...prev, [key]: value }))
+  }
 
-                                                                                                                                                      return (
-                                                                                                                                                          <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
-                                                                                                                                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                                                                                                                                        <div>
-                                                                                                                                                                                  <label className="block text-sm font-medium mb-1">Name *</label>
-                                                                                                                                                                                            <input name="name" value={form.name} onChange={handleChange} required
-                                                                                                                                                                                                        className="w-full rounded-lg border border-border bg-card p-2" />
-                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                        <div>
-                                                                                                                                                                                                                                  <label className="block text-sm font-medium mb-1">Game</label>
-                                                                                                                                                                                                                                            <select name="game" value={form.game} onChange={handleChange}
-                                                                                                                                                                                                                                                        className="w-full rounded-lg border border-border bg-card p-2">
-                                                                                                                                                                                                                                                                    {GAMES.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
-                                                                                                                                                                                                                                                                              </select>
-                                                                                                                                                                                                                                                                                      </div>
-                                                                                                                                                                                                                                                                                              <div>
-                                                                                                                                                                                                                                                                                                        <label className="block text-sm font-medium mb-1">Set</label>
-                                                                                                                                                                                                                                                                                                                  <input name="set_name" value={form.set_name ?? ""} onChange={handleChange}
-                                                                                                                                                                                                                                                                                                                              className="w-full rounded-lg border border-border bg-card p-2" />
-                                                                                                                                                                                                                                                                                                                                      </div>
-                                                                                                                                                                                                                                                                                                                                              <div>
-                                                                                                                                                                                                                                                                                                                                                        <label className="block text-sm font-medium mb-1">Card Number</label>
-                                                                                                                                                                                                                                                                                                                                                                  <input name="card_number" value={form.card_number ?? ""} onChange={handleChange}
-                                                                                                                                                                                                                                                                                                                                                                              className="w-full rounded-lg border border-border bg-card p-2" />
-                                                                                                                                                                                                                                                                                                                                                                                      </div>
-                                                                                                                                                                                                                                                                                                                                                                                              <div>
-                                                                                                                                                                                                                                                                                                                                                                                                        <label className="block text-sm font-medium mb-1">Rarity</label>
-                                                                                                                                                                                                                                                                                                                                                                                                                  <select name="rarity" value={form.rarity ?? "common"} onChange={handleChange}
-                                                                                                                                                                                                                                                                                                                                                                                                                              className="w-full rounded-lg border border-border bg-card p-2">
-                                                                                                                                                                                                                                                                                                                                                                                                                                          {RARITIES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                    </select>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <label className="block text-sm font-medium mb-1">Condition</label>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <select name="condition" value={form.condition} onChange={handleChange}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    className="w-full rounded-lg border border-border bg-card p-2">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                {CONDITIONS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          </select>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <label className="block text-sm font-medium mb-1">Language</label>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <input name="language" value={form.language} onChange={handleChange}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          className="w-full rounded-lg border border-border bg-card p-2" />
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <label className="block text-sm font-medium mb-1">Quantity</label>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <input name="quantity" type="number" min="1" value={form.quantity} onChange={handleChange}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          className="w-full rounded-lg border border-border bg-card p-2" />
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <label className="block text-sm font-medium mb-1">Purchase Price</label>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <input name="purchase_price" type="number" step="0.01" value={form.purchase_price ?? 0}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          onChange={handleChange} className="w-full rounded-lg border border-border bg-card p-2" />
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <label className="block text-sm font-medium mb-1">Estimated Value</label>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <input name="estimated_value" type="number" step="0.01" value={form.estimated_value ?? 0}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          onChange={handleChange} className="w-full rounded-lg border border-border bg-card p-2" />
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <div className="flex items-center gap-4 pt-6">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <label className="flex items-center gap-2">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <input name="is_foil" type="checkbox" checked={form.is_foil ?? false} onChange={handleChange} />
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            Foil
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      </label>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <label className="flex items-center gap-2">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <input name="is_first_edition" type="checkbox" checked={form.is_first_edition ?? false}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          onChange={handleChange} />
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      1st Edition
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                </label>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <label className="block text-sm font-medium mb-1">Image URL</label>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <input name="image_url" type="url" value={form.image_url ?? ""} onChange={handleChange}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              className="w-full rounded-lg border border-border bg-card p-2" />
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  <label className="block text-sm font-medium mb-1">Notes</label>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          <textarea name="notes" value={form.notes ?? ""} onChange={handleChange} rows={3}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    className="w-full rounded-lg border border-border bg-card p-2" />
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          </div>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <button type="submit" disabled={loading}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 disabled:opacity-50">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                {loading ? "Saving..." : initialData?.name ? "Update Card" : "Add Card"}
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      </button>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          </form>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            );
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            }
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!form.name.trim()) { setError('שם הקלף הוא שדה חובה'); return }
+    setSaving(true)
+    setError('')
+    try {
+      if (isEdit) {
+        await updateCard(card.id, form)
+      } else {
+        await createCard(form)
+      }
+      navigate('/cards')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'שגיאה בשמירה')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const inputClass = 'w-full px-3 py-2 border rounded-lg bg-background text-sm'
+  const labelClass = 'block text-sm font-medium mb-1'
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+      <div className="flex items-center gap-3 mb-4">
+        <button type="button" onClick={() => navigate('/cards')} className="text-muted-foreground hover:text-foreground">
+          <ArrowRight className="h-5 w-5" />
+        </button>
+        <h2 className="text-2xl font-bold">{isEdit ? 'עריכת קלף' : 'הוספת קלף חדש'}</h2>
+      </div>
+
+      {error && <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-sm">{error}</div>}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="md:col-span-2">
+          <label className={labelClass}>שם הקלף *</label>
+          <input className={inputClass} value={form.name} onChange={e => set('name', e.target.value)} placeholder="למשל: Charizard VMAX" />
+        </div>
+
+        <div>
+          <label className={labelClass}>משחק *</label>
+          <select className={inputClass} value={form.game} onChange={e => set('game', e.target.value as CardGame)}>
+            {GAMES.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
+          </select>
+        </div>
+
+        <div>
+          <label className={labelClass}>מצב *</label>
+          <select className={inputClass} value={form.condition} onChange={e => set('condition', e.target.value as CardCondition)}>
+            {CONDITIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+        </div>
+
+        <div>
+          <label className={labelClass}>סט</label>
+          <input className={inputClass} value={form.set_name ?? ''} onChange={e => set('set_name', e.target.value || null)} placeholder="למשל: Sword & Shield" />
+        </div>
+
+        <div>
+          <label className={labelClass}>מספר קלף</label>
+          <input className={inputClass} value={form.card_number ?? ''} onChange={e => set('card_number', e.target.value || null)} placeholder="למשל: 074/073" />
+        </div>
+
+        <div>
+          <label className={labelClass}>נדירות</label>
+          <select className={inputClass} value={form.rarity ?? ''} onChange={e => set('rarity', (e.target.value || null) as CardRarity | null)}>
+            <option value="">לא צוין</option>
+            {RARITIES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+          </select>
+        </div>
+
+        <div>
+          <label className={labelClass}>כמות</label>
+          <input type="number" min={1} className={inputClass} value={form.quantity} onChange={e => set('quantity', parseInt(e.target.value) || 1)} />
+        </div>
+
+        <div>
+          <label className={labelClass}>מחיר רכישה</label>
+          <input type="number" step="0.01" min={0} className={inputClass} value={form.purchase_price ?? ''} onChange={e => set('purchase_price', e.target.value ? parseFloat(e.target.value) : null)} />
+        </div>
+
+        <div>
+          <label className={labelClass}>שווי מוערך</label>
+          <input type="number" step="0.01" min={0} className={inputClass} value={form.estimated_value ?? ''} onChange={e => set('estimated_value', e.target.value ? parseFloat(e.target.value) : null)} />
+        </div>
+
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.is_foil} onChange={e => set('is_foil', e.target.checked)} className="rounded" />
+            פויל (Foil)
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.is_first_edition} onChange={e => set('is_first_edition', e.target.checked)} className="rounded" />
+            מהדורה ראשונה (1st Ed)
+          </label>
+        </div>
+
+        <div>
+          <label className={labelClass}>שפה</label>
+          <input className={inputClass} value={form.language} onChange={e => set('language', e.target.value)} />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className={labelClass}>URL תמונה</label>
+          <input className={inputClass} value={form.image_url ?? ''} onChange={e => set('image_url', e.target.value || null)} placeholder="https://..." />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className={labelClass}>הערות</label>
+          <textarea className={inputClass} rows={3} value={form.notes ?? ''} onChange={e => set('notes', e.target.value || null)} />
+        </div>
+      </div>
+
+      <button type="submit" disabled={saving} className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium disabled:opacity-50">
+        <Save className="h-4 w-4" />
+        {saving ? 'שומר...' : isEdit ? 'עדכן קלף' : 'הוסף קלף'}
+      </button>
+    </form>
+  )
+}
