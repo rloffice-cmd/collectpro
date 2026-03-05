@@ -38,8 +38,12 @@ export default function SearchPage() {
 
   async function handleDelete(id: string) {
     if (!confirm('בטוח שאתה רוצה למחוק את הקלף?')) return
-    await deleteCard(id)
-    setResults(prev => prev.filter(c => c.id !== id))
+    try {
+      await deleteCard(id)
+      setResults(prev => prev.filter(c => c.id !== id))
+    } catch (err) {
+      console.error('Error deleting card:', err)
+    }
   }
 
   return (
@@ -58,6 +62,7 @@ export default function SearchPage() {
           <option value="magic">Magic</option>
           <option value="yugioh">Yu-Gi-Oh!</option>
           <option value="one_piece">One Piece</option>
+          <option value="other">אחר</option>
         </select>
         <select value={rarity} onChange={e => setRarity(e.target.value)} className="px-3 py-2 border rounded-lg bg-background text-sm">
           <option value="">כל הנדירויות</option>

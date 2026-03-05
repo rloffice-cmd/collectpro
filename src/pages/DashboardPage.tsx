@@ -5,18 +5,28 @@ import { getCardStats } from '../lib/cards'
 import { getCollections } from '../lib/collections'
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState({ totalCards: 0, uniqueCards: 0, totalValue: 0 })
+  const [stats, setStats] = useState({ totalCards: 0, uniqueCards: 0, totalValue: 0, byGame: {} as Record<string, number>, byRarity: {} as Record<string, number>, byCondition: {} as Record<string, number> })
   const [collectionsCount, setCollectionsCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
+    let cancelled = false
     Promise.all([getCardStats(), getCollections()])
       .then(([cardStats, collections]) => {
+        if (cancelled) return
         setStats(cardStats)
         setCollectionsCount(collections.length)
       })
-      .catch(console.error)
-      .finally(() => setLoading(false))
+      .catch(err => {
+        if (cancelled) return
+        setError('שגיאה בטעינת הנתונים')
+        console.error(err)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => { cancelled = true }
   }, [])
 
   const statCards = [
@@ -43,6 +53,8 @@ export default function DashboardPage() {
         </Link>
       </div>
 
+      {error && <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-sm">{error}</div>}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {statCards.map(stat => (
           <div key={stat.label} className="bg-card border rounded-xl p-6">
@@ -57,7 +69,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {stats.totalCards === 0 && (
+      {stats.totalCards === 0 && !error && (
         <div className="bg-card border rounded-xl p-8 text-center">
           <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-medium mb-2">האוסף שלך ריק</h3>

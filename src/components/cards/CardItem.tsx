@@ -52,10 +52,10 @@ export default function CardItem({ card, onDelete }: CardItemProps) {
             <p className="text-sm text-muted-foreground">{GAME_LABELS[card.game]}</p>
           </div>
           <div className="flex gap-1 shrink-0">
-            <Link to={`/cards/${card.id}/edit`} className="p-1.5 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground">
+            <Link to={`/cards/${card.id}/edit`} className="p-1.5 hover:bg-muted rounded-md text-muted-foreground hover:text-foreground" aria-label="ערוך קלף">
               <Pencil className="h-4 w-4" />
             </Link>
-            <button onClick={() => onDelete(card.id)} className="p-1.5 hover:bg-destructive/10 rounded-md text-muted-foreground hover:text-destructive">
+            <button onClick={() => onDelete(card.id)} className="p-1.5 hover:bg-destructive/10 rounded-md text-muted-foreground hover:text-destructive" aria-label="מחק קלף">
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
@@ -65,11 +65,11 @@ export default function CardItem({ card, onDelete }: CardItemProps) {
           <span className="text-xs px-2 py-0.5 bg-muted rounded-full">{CONDITION_LABELS[card.condition]}</span>
           {card.rarity && (
             <span className={`text-xs px-2 py-0.5 rounded-full ${RARITY_COLORS[card.rarity]}`}>
-              {card.rarity.replace('_', ' ')}
+              {card.rarity.replaceAll('_', ' ')}
             </span>
           )}
-          {card.is_foil && <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">Foil</span>}
-          {card.is_first_edition && <span className="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded-full">1st Ed</span>}
+          {card.is_foil && <span className="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full">פויל</span>}
+          {card.is_first_edition && <span className="text-xs px-2 py-0.5 bg-red-100 text-red-700 rounded-full">מהד' ראשונה</span>}
           {card.quantity > 1 && <span className="text-xs px-2 py-0.5 bg-muted rounded-full">x{card.quantity}</span>}
         </div>
 

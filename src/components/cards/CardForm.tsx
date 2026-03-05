@@ -153,11 +153,11 @@ export default function CardForm({ card }: CardFormProps) {
         <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.is_foil} onChange={e => set('is_foil', e.target.checked)} className="rounded" />
-            Foil
+            פויל (Foil)
           </label>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.is_first_edition} onChange={e => set('is_first_edition', e.target.checked)} className="rounded" />
-            First Edition
+            מהדורה ראשונה (1st Ed)
           </label>
         </div>
 

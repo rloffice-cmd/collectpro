@@ -36,4 +36,23 @@
     @apply bg-background text-foreground antialiased;
     font-family: system-ui, -apple-system, sans-serif;
   }
+
+  .dark {
+    --color-border: oklch(0.3 0.004 286.32);
+    --color-input: oklch(0.3 0.004 286.32);
+    --color-background: oklch(0.13 0.004 286.32);
+    --color-foreground: oklch(0.93 0.004 286.32);
+    --color-primary: oklch(0.62 0.154 262.13);
+    --color-primary-foreground: oklch(0.985 0.002 286.32);
+    --color-secondary: oklch(0.2 0.004 286.32);
+    --color-secondary-foreground: oklch(0.93 0.004 286.32);
+    --color-muted: oklch(0.2 0.004 286.32);
+    --color-muted-foreground: oklch(0.6 0.007 286.32);
+    --color-accent: oklch(0.2 0.004 286.32);
+    --color-accent-foreground: oklch(0.93 0.004 286.32);
+    --color-card: oklch(0.17 0.004 286.32);
+    --color-card-foreground: oklch(0.93 0.004 286.32);
+    --color-popover: oklch(0.17 0.004 286.32);
+    --color-popover-foreground: oklch(0.93 0.004 286.32);
+  }
 }

@@ -11,12 +11,15 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (!user) return
     supabase.from('profiles').select('*').eq('id', user.id).single()
-      .then(({ data }) => {
-        if (data) {
+      .then(({ data, error: err }) => {
+        if (err) {
+          console.error('Error loading profile:', err)
+        } else if (data) {
           setDisplayName(data.display_name ?? '')
           setBio(data.bio ?? '')
           setFavoriteGame(data.favorite_game ?? '')
@@ -30,15 +33,18 @@ export default function SettingsPage() {
     if (!user) return
     setSaving(true)
     setSaved(false)
+    setError('')
     try {
-      await supabase.from('profiles').update({
+      const { error: err } = await supabase.from('profiles').update({
         display_name: displayName || null,
         bio: bio || null,
         favorite_game: favoriteGame || null,
       }).eq('id', user.id)
+      if (err) throw err
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (err) {
+      setError('שגיאה בשמירת ההגדרות. נסה שוב.')
       console.error(err)
     } finally {
       setSaving(false)
@@ -67,6 +73,9 @@ export default function SettingsPage() {
 
       <form onSubmit={handleSave} className="bg-card border rounded-xl p-6 space-y-4">
         <h3 className="font-medium">פרופיל</h3>
+
+        {error && <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-sm">{error}</div>}
+
         <div>
           <label className="block text-sm font-medium mb-1">שם תצוגה</label>
           <input className="w-full px-3 py-2 border rounded-lg bg-background text-sm" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="השם שלך" />
