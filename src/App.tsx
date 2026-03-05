@@ -11,6 +11,8 @@ const CollectionsPage = lazy(() => import("@/pages/CollectionsPage"));
 const AnalyticsPage = lazy(() => import("@/pages/AnalyticsPage"));
 const SearchPage = lazy(() => import("@/pages/SearchPage"));
 const SettingsPage = lazy(() => import("@/pages/SettingsPage"));
+const AddCardPage = lazy(() => import("@/pages/AddCardPage"));
+const EditCardPage = lazy(() => import("@/pages/EditCardPage"));
 
 function Loading() {
   return (
@@ -44,6 +46,8 @@ export default function App() {
             <Route element={<AppLayout onSignOut={signOut} />}>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/cards" element={<CardsPage />} />
+              <Route path="/cards/new" element={<AddCardPage />} />
+              <Route path="/cards/:id/edit" element={<EditCardPage />} />
               <Route path="/collections" element={<CollectionsPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/search" element={<SearchPage />} />
